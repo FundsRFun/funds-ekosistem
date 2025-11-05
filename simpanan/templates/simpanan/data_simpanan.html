@@ -1,0 +1,208 @@
+{% extends 'main/base.html' %}
+{% load humanize %}
+{% block title %}Data Simpanan{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="card shadow border-0">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="fas fa-list"></i> Data Simpanan</h5>
+      <div class="d-flex gap-2">
+        <form method="get" class="d-flex">
+          <input type="text" name="q" class="form-control form-control-sm me-2" 
+                 placeholder="Cari data..." value="{{ query }}">
+          <button class="btn btn-light btn-sm" type="submit"><i class="fas fa-search"></i></button>
+        </form>
+        <!-- Tombol utama untuk membuka menu -->
+        <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#menuSimpananModal">
+          <i class="fas fa-folder-open"></i> Menu Simpanan
+        </button>
+
+        <!-- ========================= -->
+        <!-- MODAL UTAMA: MENU SIMPANAN -->
+        <!-- ========================= -->
+        <div class="modal fade" id="menuSimpananModal" tabindex="-1" aria-labelledby="menuSimpananModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-md">
+            <div class="modal-content border-0 shadow-lg">
+              <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="menuSimpananModalLabel">
+                  <i class="fas fa-database"></i> Menu Simpanan
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+
+              <div class="modal-body text-center">
+                <div class="row">
+                  <!-- Upload Simpanan -->
+                  <div class="col-6 mb-3">
+                    <div class="card border-0 shadow-sm h-100 hover-effect"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalUploadSimpanan"
+                        data-bs-dismiss="modal">
+                      <div class="card-body">
+                        <i class="fas fa-upload fa-2x text-success mb-2"></i>
+                        <h6 class="fw-bold text-success">Upload</h6>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Hapus Semua -->
+                  <div class="col-6 mb-3">
+                    <div class="card border-0 shadow-sm h-100 hover-effect"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalHapusSimpanan"
+                        data-bs-dismiss="modal">
+                      <div class="card-body">
+                        <i class="fas fa-trash-alt fa-2x text-danger mb-2"></i>
+                        <h6 class="fw-bold text-danger">Hapus Semua</h6>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== -->
+        <!-- Modal Upload Simpanan -->
+        <!-- ==================== -->
+        <div class="modal fade" id="modalUploadSimpanan" tabindex="-1" aria-labelledby="uploadSimpananLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+              <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="uploadSimpananLabel">
+                  <i class="fas fa-cloud-upload-alt"></i> Upload Data Simpanan
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <form method="POST" enctype="multipart/form-data" action="{% url 'upload_simpanan' %}">
+                  {% csrf_token %}
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Pilih File Excel/CSV</label>
+                    <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
+                  </div>
+                  <div class="text-end">
+                    <button type="submit" class="btn btn-success">
+                      <i class="fas fa-paper-plane"></i> Upload
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================== -->
+        <!-- Modal Hapus Simpanan -->
+        <!-- =================== -->
+        <div class="modal fade" id="modalHapusSimpanan" tabindex="-1" aria-labelledby="hapusSimpananLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+              <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="hapusSimpananLabel">
+                  <i class="fas fa-exclamation-triangle"></i> Hapus Semua Data
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body text-center">
+                <p class="fw-bold text-danger mb-3">Apakah kamu yakin ingin menghapus semua data simpanan?</p>
+                <form method="POST" action="{% url 'hapus_semua_simpanan' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Ya, Hapus Semua
+                  </button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Batal
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hover & Transition -->
+        <style>
+          .hover-effect {
+            transition: all 0.2s ease-in-out;
+          }
+          .hover-effect:hover {
+            transform: translateY(-4px);
+            background-color: #f8f9fa;
+            cursor: pointer;
+          }
+        </style>
+      </div>
+    </div>
+
+    <div class="card-body table-responsive">
+      <table class="table table-hover table-bordered table-sm align-middle w-auto mx-auto">
+        <thead class="table-dark text-center text-nowrap">
+          <tr>
+            <th>No</th>
+            <th>Nama Cabang</th>
+            <th>Nama Uker</th>
+            <th>Segmentasi</th>
+            <th>Jenis Produk</th>
+            <th>Group Product</th>
+            <th>Tanggal Posisi</th>
+            <th>Flag Posisi</th>
+            <th>Nama Region</th>
+            <th>Jumlah Rekening</th>
+            <th>Saldo (Juta)</th>
+          </tr>
+        </thead>
+        <tbody class="text-nowrap">
+          {% for t in data %}
+          <tr>
+            <td class="text-center">{{ forloop.counter0|add:data.start_index }}</td>
+            <td class="text-start">{{ t.nama_cabang }}</td>
+            <td class="text-start">{{ t.nama_uker }}</td>
+            <td class="text-start">{{ t.segmentasi }}</td>
+            <td class="text-start">{{ t.jenis_produk }}</td>
+            <td class="text-start">{{ t.group_product }}</td>
+            <td class="text-center">{{ t.tanggal_posisi }}</td>
+            <td class="text-center">{{ t.flag_posisi }}</td>
+            <td class="text-start">{{ t.nama_region }}</td>
+            <td class="text-end">{{ t.jumlah_rekening|intcomma }}</td>
+            <td class="text-end">{{ t.saldo_juta|intcomma }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="11" class="text-center text-muted py-3">
+              Belum ada data simpanan
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if data.has_other_pages %}
+    <div class="card-footer bg-light border-0 d-flex justify-content-end">
+      <nav aria-label="Page navigation">
+        <ul class="pagination pagination-sm mb-0">
+          {% if data.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">&laquo; First</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ data.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">Prev</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">&laquo; First</span></li>
+            <li class="page-item disabled"><span class="page-link">Prev</span></li>
+          {% endif %}
+
+          <li class="page-item active"><span class="page-link">{{ data.number }} / {{ data.paginator.num_pages }}</span></li>
+
+          {% if data.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ data.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Next</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ data.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">Last &raquo;</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Next</span></li>
+            <li class="page-item disabled"><span class="page-link">Last &raquo;</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

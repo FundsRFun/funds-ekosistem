@@ -1,0 +1,124 @@
+{% extends 'main/base.html' %}
+{% load humanize %}
+{% block title %}Dashboard Tabungan{% endblock %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+  <!-- Filter -->
+  <div class="card shadow border-0 mb-4">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="fas fa-filter"></i> Filter Data</h5>
+    </div>
+    <div class="card-body">
+      <form method="get" id="filterForm" class="row g-3 align-items-center">
+        <div class="col-md-5">
+          <label class="form-label fw-bold">Nama Cabang</label>
+          <select name="nama_cabang" class="form-select" onchange="this.form.submit()">
+            <option value="">-- Pilih Cabang --</option>
+            {% for c in cabang_list %}
+              <option value="{{ c }}" {% if filter_cabang == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-5">
+          <label class="form-label fw-bold">Nama Uker</label>
+          <select name="nama_uker" class="form-select" onchange="this.form.submit()" {% if not filter_cabang %}disabled{% endif %}>
+            <option value="">-- Semua Uker --</option>
+            {% for u in uker_list %}
+              <option value="{{ u }}" {% if filter_uker == u %}selected{% endif %}>{{ u }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-2 text-end mt-4">
+          <a href="{% url 'index_tabungan' %}" class="btn btn-outline-secondary btn-sm">Reset</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if filter_cabang %}
+  <!-- Grafik -->
+  <div class="card shadow border-0 mb-4">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0"><i class="fas fa-chart-line"></i> Grafik Saldo 
+        {% if filter_uker %}{{ filter_uker }}{% else %}{{ filter_cabang }}{% endif %}
+      </h5>
+    </div>
+    <div class="card-body">
+      <canvas id="lineChart" height="100"></canvas>
+    </div>
+  </div>
+
+  <!-- Tabel -->
+  <div class="card shadow border-0">
+    <div class="card-header bg-success text-white">
+      <h5 class="mb-0"><i class="fas fa-table"></i> Data Detail</h5>
+    </div>
+    <div class="card-body table-responsive">
+      <table class="table table-bordered table-striped align-middle text-center">
+        <thead class="table-dark">
+          <tr>
+            <th>Nama Cabang</th>
+            <th>Nama Uker</th>
+            <th>Tanggal Posisi</th>
+            <th>Saldo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tabel_data %}
+          <tr>
+            <td>{{ t.nama_cabang }}</td>
+            <td>{{ t.nama_uker }}</td>
+            <td>{{ t.tanggal_posisi }}</td>
+            <td>Rp {{ t.saldo|intcomma }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-muted">Tidak ada data untuk filter ini</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info text-center">
+    <i class="fas fa-info-circle"></i> Silakan pilih <b>Nama Cabang</b> terlebih dahulu untuk melihat grafik dan data.
+  </div>
+  {% endif %}
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('lineChart');
+  {% if chart_labels and chart_values %}
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: {{ chart_labels|safe }},
+      datasets: [{
+        label: 'Total Saldo',
+        data: {{ chart_values|safe }},
+        fill: true,
+        borderColor: 'rgba(54, 162, 235, 1)',
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true, position: 'top' },
+        tooltip: { mode: 'index', intersect: false },
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+  {% endif %}
+</script>
+
+{% endblock %}

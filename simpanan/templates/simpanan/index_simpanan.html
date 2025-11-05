@@ -1,0 +1,182 @@
+{% extends "main/base.html" %}
+{% load humanize %}
+{% block title %}Dashboard Simpanan{% endblock %}
+{% block content %}
+
+<div class="container py-4">
+
+  <h2 class="mb-4 text-center">📈 Grafik Simpanan (Miliar)</h2>
+
+  <!-- FILTER FORM -->
+  <form method="get" class="row g-2 mb-4">
+    
+    <div class="col-md-4">
+      <label class="form-label fw-bold">Kantor Cabang</label>
+      <select name="cabang" class="form-select form-select-sm">
+        <option value="semua">Semua Cabang</option>
+        {% for c in cabang_list %}
+        <option value="{{ c }}" {% if filters.cabang == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label fw-bold">Unit Kerja</label>
+      <select name="uker" class="form-select form-select-sm">
+        <option value="semua">Semua Uker</option>
+        {% for u in uker_list %}
+        <option value="{{ u }}" {% if filters.uker == u %}selected{% endif %}>{{ u }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-4">
+  <label class="form-label fw-bold">Tanggal Posisi</label>
+
+  <div class="dropdown w-100">
+    <button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100" type="button"
+            id="dropdownTanggal" data-bs-toggle="dropdown" aria-expanded="false">
+      Pilih Tanggal
+    </button>
+
+    <div class="dropdown-menu p-3 w-100"
+         aria-labelledby="dropdownTanggal"
+         style="max-height: 260px; overflow-y: auto;">
+
+      <!-- Checkbox Semua -->
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" name="tanggal[]"
+               value="semua" id="tanggal_semua"
+               {% if "semua" in filters.tanggal %}checked{% endif %}>
+        <label class="form-check-label fw-bold" for="tanggal_semua">Semua</label>
+      </div>
+
+      <hr class="my-2">
+
+      <!-- List tanggal -->
+      {% for t in tanggal_list %}
+      <div class="form-check mb-1">
+        <input class="form-check-input tanggal-item" type="checkbox" 
+               name="tanggal[]" value="{{ t|date:'Y-m-d' }}"
+               id="tanggal_{{ forloop.counter }}"
+               {% if t|date:'Y-m-d' in filters.tanggal %}checked{% endif %}>
+        <label class="form-check-label" for="tanggal_{{ forloop.counter }}">
+          {{ t|date:"d M Y" }}
+        </label>
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPT Pilih Semua -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const checkAll = document.getElementById("tanggal_semua");
+    const checkboxes = document.querySelectorAll('.tanggal-item');
+    const btnLabel = document.getElementById("dropdownTanggal");
+
+    function updateLabel() {
+        const checked = [...checkboxes].filter(x => x.checked);
+
+        if (checkAll.checked) {
+            btnLabel.innerHTML = "Semua Tanggal";
+        } else if (checked.length === 1) {
+            btnLabel.innerHTML = checked[0].nextElementSibling.textContent.trim();
+        } else if (checked.length > 1) {
+            btnLabel.innerHTML = `${checked.length} Tanggal Dipilih`;
+        } else {
+            btnLabel.innerHTML = "Pilih Tanggal";
+        }
+    }
+
+    // Klik "Semua"
+    checkAll.addEventListener("change", function () {
+        checkboxes.forEach(cb => cb.checked = checkAll.checked);
+        updateLabel();
+    });
+
+    // Klik masing-masing tanggal
+    checkboxes.forEach(cb => {
+        cb.addEventListener("change", function () {
+            checkAll.checked = [...checkboxes].every(x => x.checked);
+            updateLabel();
+        });
+    });
+
+    // Initial text saat load page
+    updateLabel();
+});
+</script>
+
+    <div class="col-12 text-end mt-2">
+      <button class="btn btn-primary btn-sm"><i class="fas fa-filter"></i> Terapkan Filter</button>
+    </div>
+  </form>
+
+  <!-- LINE CHART -->
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <canvas id="simpananChart" height="100"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('simpananChart');
+
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: {{ labels|safe }},
+    datasets: [
+      {
+        label: 'Tabungan',
+        data: {{ chart_data.Tabungan|safe }},
+        borderColor: '#28a745',
+        backgroundColor: 'rgba(40,167,69,0.1)',
+        fill: true,
+        tension: 0.3,
+      },
+      {
+        label: 'Giro',
+        data: {{ chart_data.Giro|safe }},
+        borderColor: '#007bff',
+        backgroundColor: 'rgba(0,123,255,0.1)',
+        fill: true,
+        tension: 0.3,
+      },
+      {
+        label: 'Deposito',
+        data: {{ chart_data.Deposito|safe }},
+        borderColor: '#ffc107',
+        backgroundColor: 'rgba(255,193,7,0.1)',
+        fill: true,
+        tension: 0.3,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      title: { display: true, text: 'Tren Saldo Simpanan (Miliar Rupiah)' }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function(value) {
+            return value.toLocaleString() + ' M'; // M = Milyar
+          }
+        }
+      }
+    }
+  }
+});
+</script>
+
+{% endblock %}
